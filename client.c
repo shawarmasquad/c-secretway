@@ -13,25 +13,33 @@
 /* local headers */
 #include "global.h"
 
+
+/* global vars */
+static char ** argv0;
+
+
+
+
 int32_t
 get_servers (long amount)
 {
-	Server srvData[amount+1];
+	int32_t sockD,connectStatus,srvLen;
 
+	Server srvData[amount+1];
 	struct sockaddr_in servAddr= {
-		.sin_family = AF_INET,
-		.sin_port   = htons(9001),
+		.sin_family      = AF_INET,
+		.sin_port   		 = htons(9001),
 		.sin_addr.s_addr = INADDR_ANY,
 	};
 
-	int32_t sockD = socket(servAddr.sin_family,SOCK_STREAM,0);
-	int32_t connectStatus = connect(sockD,(struct sockaddr *)&servAddr,sizeof(servAddr));
+	sockD         = socket(servAddr.sin_family,SOCK_STREAM,0);
+	connectStatus = connect(sockD,(struct sockaddr *)&servAddr,sizeof(servAddr));
 	if (-1==connectStatus) {
 		perror("main,connect: stat == -1");
 		return -1;
 	}
 
-	int32_t srvLen = htonl(amount);
+	srvLen = htonl(amount);
 	send(sockD,&srvLen,sizeof(srvLen),0);
 	printf("Size: %ld\n",sizeof(Server)*amount+1);
 	recv(sockD,&srvData,sizeof(Server)*amount+1,0);
@@ -50,9 +58,9 @@ int32_t
 main (argc,argv)
 	int32_t argc; char ** argv;
 {
-	int     status=0;
+	int32_t status=0;
 	long    amount=0;
-	char ** argv0 = argv;
+	argv0 = argv;
 
 	if (argc<2) {
 		fprintf(stderr,"No args given.\nSee --help.\n");
@@ -62,9 +70,9 @@ main (argc,argv)
 	*argv++;
 	for (;;) {
 		if (!*argv) { break; }
-
-		if (argv-argv0 == 1) {
+		if (1==argv-argv0) {
 			amount = strtol(*argv,0,10);
+
 			if (errno) {
 				fprintf(stderr,"Not a number.\nSee --help.\n");
 				return 2;
@@ -75,7 +83,5 @@ main (argc,argv)
 	}
 
 	status = get_servers(amount);
-	printf("\n---\nstat: %d\n",status);
-
-	return 0;
+	return status;
 }
